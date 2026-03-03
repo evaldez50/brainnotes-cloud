@@ -48,13 +48,26 @@ def root():
 
 @app.post("/ask")
 def ask(req: AskRequest):
+
+    # Unir notas de voz recientes
+    local_context = ""
+    if NOTES:
+        for n in NOTES[-10:]:
+            local_context += f"- {n['transcript']}\n"
+
+    full_prompt = f"""
+Usa las siguientes notas como fuente principal:
+
+{local_context}
+
+Pregunta: {req.question}
+
+Responde claro y directo.
+"""
+
     response = client.responses.create(
         model="gpt-4.1-mini",
-        input=f"Usa las notas como fuente. Responde claro y directo.\n\nPregunta: {req.question}",
-        tools=[{
-            "type": "file_search",
-            "vector_store_ids": [VECTOR_STORE_ID]
-        }]
+        input=full_prompt
     )
 
     out_text = ""
